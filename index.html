@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Attendance Pro</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.card {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 15px;
+  width: 420px;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0;
+  border-radius: 6px;
+  border: none;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 6px;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover { background:#16a34a; }
+
+.present { color: #22c55e; font-weight: bold; }
+.absent { color: #ef4444; font-weight: bold; }
+
+table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 5px;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+<h2>📊 Smart Attendance Calculator</h2>
+
+<input type="text" id="name" placeholder="Student Name">
+<input type="number" id="required" placeholder="Required % (75)">
+
+<!-- SUBJECT SELECT -->
+<select id="subject">
+<option>Hindi</option>
+<option>English</option>
+<option>Mathematics</option>
+<option>Physics</option>
+<option>Chemistry</option>
+</select>
+
+<select id="day">
+<option>Monday</option>
+<option>Tuesday</option>
+<option>Wednesday</option>
+<option>Thursday</option>
+<option>Friday</option>
+<option>Saturday</option>
+<option>Sunday</option>
+</select>
+
+<select id="status">
+<option value="P">Present</option>
+<option value="A">Absent</option>
+</select>
+
+<button onclick="markAttendance()">Mark Attendance</button>
+<button onclick="calculate()">Calculate</button>
+<button onclick="saveData()">Save Data</button>
+<button onclick="loadData()">Load Data</button>
+
+<div id="result"></div>
+
+<table id="log">
+<tr><th>Name</th><th>Subject</th><th>Day</th><th>Status</th></tr>
+</table>
+
+</div>
+
+<script>
+let records = [];
+
+function markAttendance(){
+ let name = document.getElementById('name').value;
+ let subject = document.getElementById('subject').value;
+ let day = document.getElementById('day').value;
+ let status = document.getElementById('status').value;
+
+ if(!name){ alert("Enter name"); return; }
+
+ records.push({name,subject,day,status});
+
+ let table = document.getElementById('log');
+ let row = table.insertRow();
+
+ row.insertCell(0).innerText = name;
+ row.insertCell(1).innerText = subject;
+ row.insertCell(2).innerText = day;
+
+ let statusCell = row.insertCell(3);
+ statusCell.innerText = status;
+ statusCell.classList.add(status === 'P' ? 'present' : 'absent');
+}
+
+function calculate(){
+ let required = parseFloat(document.getElementById('required').value) || 75;
+
+ let total = records.length;
+ let present = records.filter(r=>r.status==='P').length;
+
+ if(total===0){ alert("No data"); return; }
+
+ let percent = (present/total)*100;
+
+ let skip=0, t=total, a=present;
+ while((a/(t+1))*100 >= required){ skip++; t++; }
+
+ let must=0; t=total; a=present;
+ while((a/t)*100 < required){ must++; t++; a++; }
+
+ document.getElementById('result').innerHTML = `
+ <b>Attendance:</b> ${percent.toFixed(2)}%<br>
+ Skip: ${skip}<br>
+ Must Attend: ${must}
+ `;
+}
+
+function saveData(){
+ localStorage.setItem("attendance", JSON.stringify(records));
+ alert("Saved!");
+}
+
+function loadData(){
+ let data = JSON.parse(localStorage.getItem("attendance"));
+ if(!data) return;
+
+ records = data;
+ let table = document.getElementById('log');
+ table.innerHTML = "<tr><th>Name</th><th>Subject</th><th>Day</th><th>Status</th></tr>";
+
+ records.forEach(r=>{
+   let row = table.insertRow();
+   row.insertCell(0).innerText = r.name;
+   row.insertCell(1).innerText = r.subject;
+   row.insertCell(2).innerText = r.day;
+   let cell = row.insertCell(3);
+   cell.innerText = r.status;
+   cell.classList.add(r.status==='P'?'present':'absent');
+ });
+}
+</script>
+
+</body>
+</html>
